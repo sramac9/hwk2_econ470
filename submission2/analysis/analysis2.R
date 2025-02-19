@@ -6,7 +6,7 @@ if (!require("pacman")) install.packages("pacman")
 pacman::p_load(tidyverse, ggplot2, dplyr, lubridate, flextable)
 library(dplyr)
 library(lubridate)  # For `mdy()`
-
+library(knitr)
 
 #source("submission2/data-code/_HCRIS_Data.R")
 #data=read_rds("data/output/full_HCRIS_Data.rds")
@@ -77,8 +77,82 @@ table <- unique_counts %>%
 # Save as PNG
 install.packages("webshot2") # Install webshot2 for saving images
 library("webshot2")
-#save_as_image(table, path = "unique_providers_per_year.png")
+save_as_image(table, path = "unique_providers_per_year.png")
 
-#Question 3
-ggplot(final.hcris.data, aes(x = fyear, y = log(tot_charges))) + geom_violin(fill = "lightblue", color = "darkblue") + labs(title = "Log-transformed Distribution of Total Charges by Year", x = "Year", y = "Log of Total Charges" ) +theme_minimal() + theme(axis.text.x = element_text(angle = 45, hjust = 1))
+#Question 4
+final.hcris.data$fyear <- as.factor(final.hcris.data$year)
+table3 = ggplot(final.hcris.data, aes(x = fyear, y = log(tot_charges))) + geom_violin(fill = "lightblue", color = "darkblue") + labs(title = "Log-transformed Distribution of Total Charges by Year", x = "Year", y = "Log of Total Charges" ) +theme_minimal() + theme(axis.text.x = element_text(angle = 45, hjust = 1))
+ggsave("Q3.png", plot = table3, width = 8, height = 6, dpi = 300, bg = "white")
 
+final.hcris.data <- final.hcris.data %>%
+  mutate(discount_factor = 1 - tot_discounts / tot_charges)
+
+final.hcris.data <- final.hcris.data %>%
+  mutate(price_num = (ip_charges + icu_charges + ancillary_charges) * discount_factor - tot_mcare_payment)
+
+final.hcris.data <- final.hcris.data %>%
+  mutate(price_denom = tot_discharges - mcare_discharges)
+
+final.hcris.data <- final.hcris.data %>%
+  mutate(price = price_num / price_denom)
+
+quantiles <- quantile(final.hcris.data$price, c(0.01, 0.99), na.rm = TRUE)
+final.hcris.data <- final.hcris.data %>%
+  filter(price >= quantiles[1], price <= quantiles[2])
+
+final.hcris.data$fyear <- as.factor(final.hcris.data$fyear)
+
+table4 = ggplot(final.hcris.data, aes(x = fyear, y = price)) +
+  geom_violin(fill = "lightblue", color = "darkblue") +  
+  labs(
+    title = "Distribution of Estimated Prices by Year",
+    x = "Year",
+    y = "Estimated Price"
+  ) +
+  theme_minimal() +  
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+ggsave("Q4.png", plot = table4, width = 8, height = 6, dpi = 300, bg = "white")
+
+#Question 5
+# Question 5: 
+## Filter for 2012 and define penalty
+final.hcris.2012 <- final.hcris.data %>%
+    ungroup() %>%
+    filter(
+        price_denom > 100, !is.na(price_denom),
+        price_num > 0, !is.na(price_num),
+        price < 100000,
+        beds > 30,
+        year == 2012
+    ) %>%
+    mutate(
+        hvbp_payment = ifelse(is.na(hvbp_payment), 0, hvbp_payment),
+        hrrp_payment = ifelse(is.na(hrrp_payment), 0, abs(hrrp_payment)),
+        penalty = (hvbp_payment - hrrp_payment) < 0  # TRUE/FALSE
+    )
+## Calculate mean prices for penalized vs non-penalized hospitals
+mean.pen <- round(mean(final.hcris.2012$price[final.hcris.2012$penalty == TRUE], na.rm = TRUE), 2)
+mean.nopen <- round(mean(final.hcris.2012$price[final.hcris.2012$penalty == FALSE], na.rm = TRUE), 2)
+
+## Print results
+cat("Mean price for penalized hospitals:", mean.pen, "\n")
+cat("Mean price for non-penalized hospitals:", mean.nopen, "\n")
+
+# Print results as a table
+results <- data.frame(
+    Category = c("Penalized Hospitals", "Non-Penalized Hospitals"),
+    Mean_Price = c(mean.pen, mean.nopen)
+)
+print(results)
+
+kable(results, format = "html", file = "table.html")
+webshot("table.html", "Q5.png")
+
+
+
+
+
+
+
+
+save.image("submission2/Hwk2_workspace.Rdata")
