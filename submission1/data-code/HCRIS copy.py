@@ -12,21 +12,21 @@ def install_and_import(package):
         __import__(package)
 
 # Install and import the required packages
-required_packages = ["pandas", "numpy"]
+#required_packages = ["pandas", "numpy"]
 
-for package in required_packages:
-    install_and_import(package)
+#for package in required_packages:
+    #install_and_import(package)
 
 # Importing the libraries
 import pandas as pd
-import numpy as np
+
 import zipfile
 
 
 # selecting variables via locations
 
         # Create a list of lists containing the data
-import pandas as pd
+
 import warnings
 warnings.simplefilter('ignore')
 
@@ -55,22 +55,30 @@ hcris_vars = pd.DataFrame([
 
 #reading in data from zip files
 
-zip_path08 = "submission1/Data/input/HCRIS_data/HospitalFY2008.zip"
-zip_path09 = "submission1/Data/input/HCRIS_data/HospitalFY2009.zip"
+zip_path08 = "Data/input/HCRIS_data/HospitalFY2008.zip"
+zip_path09 = "Data/input/HCRIS_data/HospitalFY2009.zip"
+zip_path10 = "Data/input/HCRIS_data/HospitalFY2010_2.zip"
+zip_path11 = "Data/input/HCRIS_data/HospitalFY2011_2.zip"
+
 
 alpha08 = "HospitalFY2008/hosp_2008_ALPHA.CSV"
 numeric08 = "HospitalFY2008/hosp_2008_NMRC.CSV"
 alpha09 = "HospitalFY2009/hosp_2009_ALPHA.CSV"
 numeric09 = "HospitalFY2009/hosp_2009_NMRC.CSV"
+alpha10 = "HospitalFY2010/hosp_2010_ALPHA.CSV"
+numeric10 = "HospitalFY2010/hosp_2010_NMRC.CSV"
+alpha11 = "HospitalFY2011/hosp_2011_ALPHA.CSV"
+numeric11 = "HospitalFY2011/hosp_2011_NMRC.CSV"
 
 rpt08 = "HospitalFY2008/hosp_2008_RPT.CSV"
 rpt09 = "HospitalFY2009/hosp_2009_RPT.CSV"
-
+rpt10 = "HospitalFY2010/hosp_2010_RPT.CSV"
+rpt11 = "HospitalFY2011/hosp_2011_RPT.CSV"
 
 
 
 #creating dataframes:
-#98
+#08
     # Open the ZIP file
 with zipfile.ZipFile(zip_path08, 'r') as z:
     # Choose a specific file inside the ZIP
@@ -85,7 +93,7 @@ with zipfile.ZipFile(zip_path08, 'r') as z:
                                     'INITL_RPT_SW','LAST_RPT_SW','TRNSMTL_NUM','FI_NUM',
                                     'ADR_VNDR_CD','FI_CREAT_DT','UTIL_CD','NPR_DT',
                                     'SPEC_IND','FI_RCPT_DT'], dtype=str)
-#99  
+#09  
 with zipfile.ZipFile(zip_path09, 'r') as z:  
     with z.open(alpha09) as file02:
         df2009a = pd.read_csv(file02, names=['RPT_REC_NUM', 'WKSHT_CD', 'LINE_NUM', 'CLMN_NUM', 'ITM_VAL_NUM'], dtype=str)
@@ -97,13 +105,38 @@ with zipfile.ZipFile(zip_path09, 'r') as z:
                                     'INITL_RPT_SW','LAST_RPT_SW','TRNSMTL_NUM','FI_NUM',
                                     'ADR_VNDR_CD','FI_CREAT_DT','UTIL_CD','NPR_DT',
                                     'SPEC_IND','FI_RCPT_DT'], dtype=str)
+#10
+with zipfile.ZipFile(zip_path10, 'r') as z:
+    with z.open(alpha10) as file03:
+        df2010a = pd.read_csv(file03, names=['RPT_REC_NUM', 'WKSHT_CD', 'LINE_NUM', 'CLMN_NUM', 'ITM_VAL_NUM'], dtype=str)
+    with z.open(numeric10) as file3:
+        df2010n = pd.read_csv(file3, names=['RPT_REC_NUM', 'WKSHT_CD', 'LINE_NUM', 'CLMN_NUM', 'ITM_VAL_NUM'], dtype=str)
+    with z.open(rpt10) as file003:
+        df2010r = pd.read_csv(file003, names=['RPT_REC_NUM','PRVDR_CTRL_TYPE_CD','PRVDR_NUM','NPI',
+                                    'RPT_STUS_CD','FY_BGN_DT','FY_END_DT','PROC_DT',
+                                    'INITL_RPT_SW','LAST_RPT_SW','TRNSMTL_NUM','FI_NUM',
+                                    'ADR_VNDR_CD','FI_CREAT_DT','UTIL_CD','NPR_DT',
+                                    'SPEC_IND','FI_RCPT_DT'], dtype=str)
+#11
+with zipfile.ZipFile(zip_path11, 'r') as z:
+    with z.open(alpha11) as file04:
+        df2011a = pd.read_csv(file04, names=['RPT_REC_NUM', 'WKSHT_CD', 'LINE_NUM', 'CLMN_NUM', 'ITM_VAL_NUM'], dtype=str)
+    with z.open(numeric11) as file4:
+        df2011n = pd.read_csv(file4, names=['RPT_REC_NUM', 'WKSHT_CD', 'LINE_NUM', 'CLMN_NUM', 'ITM_VAL_NUM'], dtype=str)
+    with z.open(rpt11) as file004:
+        df2011r = pd.read_csv(file004, names=['RPT_REC_NUM','PRVDR_CTRL_TYPE_CD','PRVDR_NUM','NPI',
+                                    'RPT_STUS_CD','FY_BGN_DT','FY_END_DT','PROC_DT',
+                                    'INITL_RPT_SW','LAST_RPT_SW','TRNSMTL_NUM','FI_NUM',
+                                    'ADR_VNDR_CD','FI_CREAT_DT','UTIL_CD','NPR_DT',
+                                    'SPEC_IND','FI_RCPT_DT'], dtype=str)
+
 
 #build dataset
 #McCarthy Code
 
 final_hcris_v1996 = None
 
-for year in range(2008, 2010):
+for year in range(2008, 2012):
 
     data_r = globals()[f"df{year}r"]
     data_n = globals()[f"df{year}n"]
@@ -131,5 +164,5 @@ for year in range(2008, 2010):
         final_hcris_v1996 = pd.concat([final_hcris_v1996, final_reports], ignore_index=True)
 
 # Save final dataset
-final_hcris_v1996.to_csv('submission1/data/output/HCRIS_v1996.csv', index=False)
+final_hcris_v1996.to_csv('data/output/HCRIS_v1996.csv', index=False)
 

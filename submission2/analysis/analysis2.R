@@ -37,9 +37,22 @@ duplicate.hcris =
   filter(total_reports>1) %>%
   mutate(time_diff=fy_end-fy_start)
 
+report_counts <- duplicate.hcris %>%
+  group_by(fyear) %>%
+  summarise(num_hospitals = n_distinct(provider_number))
+
+## creating a line graph
+#ggplot(report_counts, aes(x = fyear, y = num_hospitals)) +
+    #geom_line() +
+    #labs(title = "Number of Hospitals Over Time",
+             #x = "Fiscal Year",
+             #y = "Number of Hospitals") +
+    #theme_minimal()
 hospitals_per_year <- duplicate.hcris %>% group_by(year) %>% summarise(num_hospitals =n_distinct(provider_number), .groups = 'drop') 
-table1=ggplot(hospitals_per_year, aes(x = year,y = num_hospitals)) + geom_line() + geom_point() + labs(title = "Number of Hospitals Filing More Than One Report Per Year", x = "Year", y = "Number of Hospitals") + theme_minimal() + theme(axis.text.x = element_text(angle = 45, hjust =1))
-print(table1)
+table0 = ggplot(hospitals_per_year, aes(x = year,y = num_hospitals)) + geom_line() + geom_point() + labs(title = "Number of Hospitals Filing More Than One Report Per Year", x = "Year", y = "Number of Hospitals") + theme_minimal() + theme(axis.text.x = element_text(angle = 45, hjust =1))
+ggsave("my_plot.png", plot = table0, width = 8, height = 6, dpi = 300, bg = "white")
+
+
 
 
 #Question 2
@@ -63,8 +76,9 @@ table <- unique_counts %>%
 
 # Save as PNG
 install.packages("webshot2") # Install webshot2 for saving images
-library(webshot2)
-save_as_image(table, path = "unique_providers_per_year.png")
+library("webshot2")
+#save_as_image(table, path = "unique_providers_per_year.png")
 
-
+#Question 3
+ggplot(final.hcris.data, aes(x = fyear, y = log(tot_charges))) + geom_violin(fill = "lightblue", color = "darkblue") + labs(title = "Log-transformed Distribution of Total Charges by Year", x = "Year", y = "Log of Total Charges" ) +theme_minimal() + theme(axis.text.x = element_text(angle = 45, hjust = 1))
 
