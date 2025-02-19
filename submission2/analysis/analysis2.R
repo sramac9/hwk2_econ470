@@ -3,7 +3,7 @@
 ## Date Edited:   2/18/2025
 
 if (!require("pacman")) install.packages("pacman")
-pacman::p_load(tidyverse, ggplot2, dplyr, lubridate)
+pacman::p_load(tidyverse, ggplot2, dplyr, lubridate, flextable)
 library(dplyr)
 library(lubridate)  # For `mdy()`
 
@@ -12,8 +12,7 @@ library(lubridate)  # For `mdy()`
 #data=read_rds("data/output/full_HCRIS_Data.rds")
 
 
-
-#Question 1
+#question 1
 final.hcris.v1996=read_csv("data/output/HCRIS_v1996.csv")
 final.hcris.v2010=read_csv("data/output/HCRIS_v2010.csv")
 
@@ -49,5 +48,23 @@ unique_counts <- data %>%
   group_by(year) %>%
   summarise(num_unique_providers = n_distinct(provider_number), .groups = 'drop')
 
-print(unique_counts)
+
+library(flextable)
+
+# Create a nice table
+table <- unique_counts %>%
+  flextable() %>%
+  set_caption("Unique Providers Per Year") %>%
+  theme_vanilla() %>%
+  bg(part = "all", bg = "white") %>%
+  set_table_properties(width = 1, layout = "autofit") %>% # Auto-fit columns
+  font(fontname = "Arial") %>% # Set a nice readable font
+  align(align = "center", part = "all") # Center text
+
+# Save as PNG
+install.packages("webshot2") # Install webshot2 for saving images
+library(webshot2)
+save_as_image(table, path = "unique_providers_per_year.png")
+
+
 
