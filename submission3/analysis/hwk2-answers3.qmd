@@ -97,18 +97,23 @@ Nearest neighbor matching (1-to-1) with Mahalanobis distance based on quartiles 
 Inverse propensity weighting, where the propensity scores are based on quartiles of bed size
 Simple linear regression, adjusting for quartiles of bed size using dummy variables and appropriate interactions as discussed in class
 
+```{r}
+#| echo: false
+knitr::include_graphics("Q7.png")
+```
 
 \newpage
 \noindent 8. With these different treatment effect estimators, are the results similar, identical, very different?
 
+The results are the exact same between the first two groups (nearest neighbor matching with inverse variance and nearest neighbor matching Mahalanobis). However, I was not able to obtain a standard error value for inverse propensity weighting, or an average treatment effect for the simple linear regression model.  The ATE for inverse propensity weighting is mugh igher than the nearest neighbor matching, and the SE for the simple linear regression is slightly lower.
 
 \newpage
 \noindent 9. Do you think you’ve estimated a causal effect of the penalty? Why or why not? (just a couple of sentences)
 
-
+I do not think I have fully estimated the causal effect of the penalty because I did not control for enough confounding variables when running the models. There are likely to be other factors influencing price, so running analyses of only penalty status against price will not produce a causal effect.
 
 
 \newpage
 \noindent 10. Briefly describe your experience working with these data (just a few sentences). Tell me one thing you learned and one thing that really aggravated or surprised you.
 
-Working with this data definitely has a learning curve. Because I am also using this dataset for my thesis analysis, I had some experience working with it previously, but even then the results of the clean data set can be difficult to produce. I do find it very interesting that 
+Working with this data definitely has a learning curve. Because I am also using this dataset for my thesis analysis, I had some experience working with it previously, but even just the results of the clean data set can be difficult to produce. One thing I learned was the importance of matching data types when trying to merge data sets, such as making sure that everything is a string or numeric value so that it is read properly while merging datsets. One thing that was especially aggravating was properly cleaning the data so that it combined the alpha/numeric files with the report files, while still including data values for the alpha/numeric variables. I was stuck on this issue for a long time, both for this assignment and my thesis. Overall, I have a much better understanding of running econometric analyses on large, complicated datasets, which is helpful for any type of data analysis or research that I pursue in the future.
