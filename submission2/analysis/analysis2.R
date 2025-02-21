@@ -50,7 +50,7 @@ report_counts <- duplicate.hcris %>%
     #theme_minimal()
 hospitals_per_year <- duplicate.hcris %>% group_by(year) %>% summarise(num_hospitals =n_distinct(provider_number), .groups = 'drop') 
 table0 = ggplot(hospitals_per_year, aes(x = year,y = num_hospitals)) + geom_line() + geom_point() + labs(title = "Number of Hospitals Filing More Than One Report Per Year", x = "Year", y = "Number of Hospitals") + theme_minimal() + theme(axis.text.x = element_text(angle = 45, hjust =1))
-ggsave("my_plot.png", plot = table0, width = 8, height = 6, dpi = 300, bg = "white")
+#ggsave("Q1.png", plot = table0, width = 6, height = 5, dpi = 300, bg = "white")
 
 
 
@@ -77,32 +77,32 @@ table <- unique_counts %>%
 # Save as PNG
 install.packages("webshot2") # Install webshot2 for saving images
 library("webshot2")
-save_as_image(table, path = "unique_providers_per_year.png")
+#save_as_image(table, path = "unique_providers_per_year.png")
 
 #Question 4
-final.hcris.data$fyear <- as.factor(final.hcris.data$year)
-table3 = ggplot(final.hcris.data, aes(x = fyear, y = log(tot_charges))) + geom_violin(fill = "lightblue", color = "darkblue") + labs(title = "Log-transformed Distribution of Total Charges by Year", x = "Year", y = "Log of Total Charges" ) +theme_minimal() + theme(axis.text.x = element_text(angle = 45, hjust = 1))
-ggsave("Q3.png", plot = table3, width = 8, height = 6, dpi = 300, bg = "white")
+data$fyear <- as.factor(data$year)
+table3 = ggplot(data, aes(x = fyear, y = log(tot_charges))) + geom_violin(fill = "lightblue", color = "darkblue") + labs(title = "Log-transformed Distribution of Total Charges by Year", x = "Year", y = "Log of Total Charges" ) +theme_minimal() + theme(axis.text.x = element_text(angle = 45, hjust = 1))
+#ggsave("Q3.png", plot = table3, width = 6, height = 5, dpi = 300, bg = "white")
 
-final.hcris.data <- final.hcris.data %>%
+data <- data %>%
   mutate(discount_factor = 1 - tot_discounts / tot_charges)
 
-final.hcris.data <- final.hcris.data %>%
+data <- data %>%
   mutate(price_num = (ip_charges + icu_charges + ancillary_charges) * discount_factor - tot_mcare_payment)
 
-final.hcris.data <- final.hcris.data %>%
+data <- data %>%
   mutate(price_denom = tot_discharges - mcare_discharges)
 
-final.hcris.data <- final.hcris.data %>%
+data <- data %>%
   mutate(price = price_num / price_denom)
 
-quantiles <- quantile(final.hcris.data$price, c(0.01, 0.99), na.rm = TRUE)
-final.hcris.data <- final.hcris.data %>%
+quantiles <- quantile(data$price, c(0.01, 0.99), na.rm = TRUE)
+data <- data %>%
   filter(price >= quantiles[1], price <= quantiles[2])
 
-final.hcris.data$fyear <- as.factor(final.hcris.data$fyear)
+data$fyear <- as.factor(data$fyear)
 
-table4 = ggplot(final.hcris.data, aes(x = fyear, y = price)) +
+table4 = ggplot(data, aes(x = fyear, y = price)) +
   geom_violin(fill = "lightblue", color = "darkblue") +  
   labs(
     title = "Distribution of Estimated Prices by Year",
@@ -111,12 +111,12 @@ table4 = ggplot(final.hcris.data, aes(x = fyear, y = price)) +
   ) +
   theme_minimal() +  
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
-ggsave("Q4.png", plot = table4, width = 8, height = 6, dpi = 300, bg = "white")
+#ggsave("Q4.png", plot = table4, width = 6, height = 5, dpi = 300, bg = "white")
 
 #Question 5
 # Question 5: 
 ## Filter for 2012 and define penalty
-final.hcris.2012 <- final.hcris.data %>%
+final.hcris.2012 <- data %>%
     ungroup() %>%
     filter(
         price_denom > 100, !is.na(price_denom),
@@ -145,10 +145,117 @@ results <- data.frame(
 )
 print(results)
 
-kable(results, format = "html", file = "table.html")
-webshot("table.html", "Q5.png")
+
+#Question 6
+# Question 6: Hospitals into quartiles
+## Define penalty: HVBP + HRRP < 0
+final.hcris.2012 <- data %>%
+    mutate(
+        hvbp_payment = ifelse(is.na(hvbp_payment), 0, hvbp_payment),
+        hrrp_payment = ifelse(is.na(hrrp_payment), 0, hrrp_payment),
+        penalty = (hvbp_payment + hrrp_payment) < 0
+    )
+## Calculate bed size quartiles
+bed_quartiles <- quantile(final.hcris.2012$beds, probs = c(0.25, 0.50, 0.75), na.rm = TRUE)
+
+## Assign each hospital to a bed size quartile
+final.hcris.2012 <- final.hcris.2012 %>%
+  mutate(
+    Q1 = as.numeric((beds <= bed_quartiles[1]) & (beds > 0)),
+    Q2 = as.numeric((beds > bed_quartiles[1]) & (beds <= bed_quartiles[2])),
+    Q3 = as.numeric((beds > bed_quartiles[2]) & (beds <= bed_quartiles[3])),
+    Q4 = as.numeric(beds > bed_quartiles[3])
+  )
+
+## Calculate average prices by quartile and penalty status
+quartile_summary <- final.hcris.2012 %>%
+  mutate(bed_quartile = case_when(
+    Q1 == 1 ~ "Q1",
+    Q2 == 1 ~ "Q2",
+    Q3 == 1 ~ "Q3",
+    Q4 == 1 ~ "Q4"
+  )) %>%
+  group_by(bed_quartile, penalty) %>%
+  summarise(avg_price = mean(price, na.rm = TRUE), .groups = "drop") %>%
+  pivot_wider(names_from = penalty, values_from = avg_price, names_prefix = "penalty_")
+
+## Print the table
+#print(quartile_summary)
+
+library(ggplot2)
+library(gridExtra)
+library(grid)
+
+# Create a table plot
+table_plot <- tableGrob(quartile_summary)
+
+# Save the table as a PNG
+#ggsave("Q6.png", plot = table_plot, width = 6, height = 4, dpi = 300)
 
 
+#Question 7
+# Question 7: Average Treatment Effects
+install.packages("Matching")
+install.packages("MatchIt")
+install.packages("WeightIt")
+
+## Nearest neighbor matching (1-to-1) with inverse variance distance based on quartiles of bed size
+lp.covs <- final.hcris.2012 %>%
+  select(Q1, Q2, Q3, Q4) %>%
+  na.omit()
+
+lp.vars <- final.hcris.2012 %>%
+  select(price, penalty) %>%
+  na.omit()
+
+m.nn.var <- Matching::Match(Y=lp.vars$price,
+                            Tr=lp.vars$penalty,
+                            X=lp.covs,
+                            M=1, 
+                            Weight=1,
+                            estimand="ATE")
+
+ate_nn_var <- m.nn.var$est
+se_nn_var <- m.nn.var$se
+
+# Nearest neighbor matching with Mahalanobis distance
+m.nn.md <- Matching::Match(Y = lp.vars$price,
+                            Tr = lp.vars$penalty,
+                            X = lp.covs,
+                            M = 1,
+                            Weight = 2,
+                            estimand = "ATE")
+
+ate_nn_md <- m.nn.md$est
+se_nn_md <- m.nn.md$se
+
+# Inverse propensity weighting
+logit.model <- glm(penalty ~ Q1 + Q2 + Q3 + Q4, family = binomial, data = final.hcris.2012)
+ps <- fitted(logit.model)
+ipw_weights <- ifelse(final.hcris.2012$penalty == 1, 1 / ps, 1 / (1 - ps))
+ate_ipw <- weighted.mean(lp.vars$price, ipw_weights)
+
+# Simple linear regression
+final.hcris.2012$Q1_interaction <- final.hcris.2012$penalty * final.hcris.2012$Q1
+final.hcris.2012$Q2_interaction <- final.hcris.2012$penalty * final.hcris.2012$Q2
+final.hcris.2012$Q3_interaction <- final.hcris.2012$penalty * final.hcris.2012$Q3
+final.hcris.2012$Q4_interaction <- final.hcris.2012$penalty * final.hcris.2012$Q4
+
+lm_model <- lm(price ~ penalty + Q1 + Q2 + Q3 + Q4 + 
+                 Q1_interaction + Q2_interaction + Q3_interaction + Q4_interaction, 
+               data = final.hcris.2012)
+
+ate_lm <- coef(lm_model)["penalty"]
+
+# Combine results into a table
+q7 <- data.frame(
+  Method = c("Nearest Neighbor Matching (IV)", "Nearest Neighbor Matching (Mahalanobis)", 
+             "Inverse Propensity Weighting", "Simple Linear Regression"),
+  ATE = c(ate_nn_var, ate_nn_md, ate_ipw, ate_lm),
+  SE = c(se_nn_var, se_nn_md, NA, summary(lm_model)$coefficients["penaltyTRUE", "Std. Error"]))
+
+print(q7)
+ggsave("Q7.png", plot = q7, width = 6, height = 4, dpi = 300)
 
 
 

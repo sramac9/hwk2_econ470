@@ -1,0 +1,114 @@
+---
+title: "Homework 2"
+subtitle: "Research Methods, Spring 2025"
+author: "Sammy Ramacher"
+header-includes:
+  - \usepackage{xcolor}
+  - \usepackage{float}
+  - \floatplacement{table}{H}
+  - \usepackage{titling}
+  - \pretitle{\begin{center}\LARGE\bfseries}
+  - \posttitle{\end{center}}
+  - \preauthor{\begin{center}\large\color{violet}}
+  - \postauthor{\end{center}}
+format:
+  pdf:
+    output-file: "ramacher-s-hwk2-2"
+    header-includes:
+      - \usepackage{float}
+      - \floatplacement{table}{H}
+---
+
+
+```{r}
+#| include: false
+
+if (!require("pacman")) install.packages("pacman")
+pacman::p_load(tidyverse, ggplot2, dplyr, lubridate, readr, readxl, hrbrthemes, fixest,
+               scales, gganimate, gapminder, gifski, png, tufte, plotly, OECD,
+               ggrepel, survey, foreign, devtools, pdftools, kableExtra, modelsummary,
+               kableExtra)
+```
+
+
+\newpage
+# Building the Data
+Answer the following based on our initial, simplified dataset of enrollments, plan types, and service areas:
+
+\noindent 1. How many hospitals filed more than one report in the same year? Show your answer as a line graph of the number of hospitals over time.
+
+```{r}
+#| echo: false
+
+
+knitr::include_graphics("Q1.png")
+
+```
+
+
+
+
+
+\newpage
+\noindent 2. After removing/combining multiple reports, how many unique hospital IDs (Medicare provider numbers) exist in the data?
+
+
+```{r}
+#| echo: false
+knitr::include_graphics("Q2.png")
+```
+
+\newpage
+\noindent 3. What is the distribution of total charges (tot_charges in the data) in each year? Show your results with a “violin” plot, with charges on the y-axis and years on the x-axis. For a nice tutorial on violin plots, look at Violin Plots with ggplot2.
+
+
+```{r}
+#| echo: false
+knitr::include_graphics("Q3.png")
+```
+
+\newpage
+\noindent 4. What is the distribution of estimated prices in each year? Again present your results with a violin plot, and recall our formula for estimating prices from class. Be sure to do something about outliers and/or negative prices in the data.
+
+```{r}
+#| echo: false
+knitr::include_graphics("Q4.png")
+```
+
+\newpage
+\noindent 5. Calculate the average price among penalized versus non-penalized hospitals.
+
+The average price among penalized hospitals is 9685.11. The average price among non-penalized hospitals is 9323.93.
+
+\newpage
+\noindent 6. Split hospitals into quartiles based on bed size. To do this, create 4 new indicator variables, where each variable is set to 1 if the hospital’s bed size falls into the relevant quartile. Provide a table of the average price among treated/control groups for each quartile.
+
+
+```{r}
+#| echo: false
+knitr::include_graphics("Q5.png")
+```
+
+\newpage
+\noindent 7. Find the average treatment effect using each of the following estimators, and present your results in a single table:
+
+Nearest neighbor matching (1-to-1) with inverse variance distance based on quartiles of bed size
+Nearest neighbor matching (1-to-1) with Mahalanobis distance based on quartiles of bed size
+Inverse propensity weighting, where the propensity scores are based on quartiles of bed size
+Simple linear regression, adjusting for quartiles of bed size using dummy variables and appropriate interactions as discussed in class
+
+
+\newpage
+\noindent 8. With these different treatment effect estimators, are the results similar, identical, very different?
+
+
+\newpage
+\noindent 9. Do you think you’ve estimated a causal effect of the penalty? Why or why not? (just a couple of sentences)
+
+
+
+
+\newpage
+\noindent 10. Briefly describe your experience working with these data (just a few sentences). Tell me one thing you learned and one thing that really aggravated or surprised you.
+
+Working with this data definitely has a learning curve. Because I am also using this dataset for my thesis analysis, I had some experience working with it previously, but even then the results of the clean data set can be difficult to produce. I do find it very interesting that 
